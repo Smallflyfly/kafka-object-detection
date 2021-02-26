@@ -4,14 +4,16 @@
 @author:fangpf
 @time: 2021/02/26
 """
+import argparse
+
 import cv2
 from imutils.video import FPS
 from kafka import KafkaConsumer
 import numpy as np
 
 
-server = '42.193.174.78:9092'
-topic = 'face-detection'
+# server = '42.193.174.78:9092'
+# topic = 'face-detection'
 
 
 def show(server, topic):
@@ -31,4 +33,12 @@ def show(server, topic):
 
 
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(description='face detection')
+    parser.add_argument('--server', default='42.193.174.78:9092', type=str, help='kafka server')
+    parser.add_argument('--topict', default='face-detection', type=str, help='kafka topic')
+
+    args = parser.parse_args()
+    server = args.server
+    topic = args.topic
     show(server, topic)
