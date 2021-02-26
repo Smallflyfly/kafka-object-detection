@@ -16,7 +16,7 @@ from cfg.config import cfg_mnet
 from models.retinaface import RetinaFace
 from utils.utils import image_process, load_model, process_face_data
 
-producer = KafkaProducer(bootstrap_servers='127.0.0.1:9092')
+producer = KafkaProducer(bootstrap_servers='42.193.174.78:9092')
 topic = 'face-detection'
 
 retina_trained_model = './weights/mobilenet0.25_Final.pth'
