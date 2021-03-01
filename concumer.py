@@ -5,6 +5,7 @@
 @time: 2021/02/26
 """
 import argparse
+from io import BytesIO
 
 import cv2
 from imutils.video import FPS
@@ -12,31 +13,28 @@ from kafka import KafkaConsumer
 import numpy as np
 
 
-# server = '42.193.174.78:9092'
-# topic = 'face-detection'
-
-
 def show(server, topic):
-    consumer = KafkaConsumer(topic, booststrap_servers=server)
-    fps = FPS().start()
+    consumer = KafkaConsumer(topic, bootstrap_servers=server)
     for message in consumer:
-        decoded = np.frombuffer(message.value, np.int8)
-        # decoded = decoded.reshape
+        buf_str = np.array(message.value).tostring()
+        nparr = np.asarray(bytearray(buf_str), np.uint8)
+        decoded = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        print(decoded)
         cv2.imshow('came', decoded)
-
+        # print(decoded)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-        fps.update()
+        # fps.update()
 
-    fps.stop()
+    # fps.stop()
     cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='face detection')
-    parser.add_argument('--server', default='42.193.174.78:9092', type=str, help='kafka server')
-    parser.add_argument('--topict', default='face-detection', type=str, help='kafka topic')
+    parser.add_argument('--server', default='localhost:9092', type=str, help='kafka server')
+    parser.add_argument('--topic', default='face-detection', type=str, help='kafka topic')
 
     args = parser.parse_args()
     server = args.server

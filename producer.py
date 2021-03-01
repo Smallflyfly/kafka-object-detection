@@ -15,8 +15,10 @@ from kafka.errors import KafkaError
 from cfg.config import cfg_mnet
 from models.retinaface import RetinaFace
 from utils.utils import image_process, load_model, process_face_data
+import numpy as np
 
-producer = KafkaProducer(bootstrap_servers='42.193.174.78:9092')
+
+kafka_producer = KafkaProducer(bootstrap_servers='localhost:9092')
 topic = 'face-detection'
 
 retina_trained_model = './weights/mobilenet0.25_Final.pth'
@@ -36,33 +38,38 @@ def detection(im):
     return result_data
 
 
+def kafka_send(topic, data):
+    kafka_producer.send(topic, data)
+
+
 def producer():
 
     video = cv2.VideoCapture(0)
-    time.sleep(2)
+    time.sleep(5)
 
     while video.isOpened():
         success, frame = video.read()
-        frame = imutils.resize(frame, width=640)
+        frame = imutils.resize(frame, width=640, height=640)
         if not success:
             break
         face_result = detection(frame)
+        if face_result is None:
+            continue
         for det in face_result:
             xmin, ymin, xmax, ymax, conf = det
             # xmin, ymin, xmax, ymax = int(xmin) * 4, int(ymin) * 4, int(xmax) * 4, int(ymax) * 4
             xmin, ymin, xmax, ymax = int(xmin), int(ymin), int(xmax), int(ymax)
             cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (255, 255, 0), 1)
         # cv2.imshow('im', frame)
-        # data = cv2.imencode('.jpeg', frame)[1].tobytes()
-        data = frame.tobytes()
-        future = producer.send(topic, data)
-        # if cv2.waitKey(1) & 0xFF == ord('q'):
-        #     break
-        try:
-            future.get(timeout=10)
-        except KafkaError as e:
-            print(e)
+        data = cv2.imencode('.jpg', frame)[1].tobytes()
+        kafka_send(topic, data)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+        # try:
+        #     future.get(timeout=10)
+        # except KafkaError as e:
+        #     print(e)
+        #     break
 
         print('.', end='', flush=True)
 
